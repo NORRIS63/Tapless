@@ -1,0 +1,6 @@
+{
+  "name": "Tapless",
+  "description": "Tapless - One press. Every word. Offline voice recorder with hardware button shortcut, persistent foreground recording, and local playback.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
