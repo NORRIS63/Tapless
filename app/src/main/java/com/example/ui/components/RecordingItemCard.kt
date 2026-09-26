@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,11 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.AudioRecording
 import com.example.player.PlaybackState
+import com.example.ui.theme.DarkDivider
 import com.example.ui.theme.DarkSurface
 import com.example.ui.theme.DarkSurfaceBorder
 import com.example.ui.theme.DarkSurfaceVariant
-import com.example.ui.theme.PlaybackCyan
-import com.example.ui.theme.PlaybackCyanGlow
+import com.example.ui.theme.RecordingRed
+import com.example.ui.theme.TealAccent
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
@@ -77,104 +79,97 @@ fun RecordingItemCard(
 ) {
     val isCurrentTrack = playbackState.currentFile?.absolutePath == recording.file.absolutePath
     val isPlayingThis = isCurrentTrack && playbackState.isPlaying
-    val isPausedThis = isCurrentTrack && playbackState.isPaused
     var showMenu by remember { mutableStateOf(false) }
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(10.dp))
             .border(
                 width = 1.dp,
-                color = if (isCurrentTrack) PlaybackCyan.copy(alpha = 0.5f) else DarkSurfaceBorder,
-                shape = RoundedCornerShape(16.dp)
+                color = if (isCurrentTrack) TealAccent.copy(alpha = 0.4f) else DarkSurfaceBorder,
+                shape = RoundedCornerShape(10.dp)
             )
             .testTag("recording_item_${recording.id}"),
         color = if (isCurrentTrack) DarkSurfaceVariant else DarkSurface,
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(10.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp)
+                .padding(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Play / Pause Circle Button
+                // Compact Play / Pause Circular Button
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
-                        .background(if (isCurrentTrack) PlaybackCyan else DarkSurfaceVariant)
-                        .border(1.dp, if (isCurrentTrack) PlaybackCyan else Color(0xFF374151), CircleShape),
+                        .background(if (isPlayingThis) TealAccent else DarkSurfaceVariant)
+                        .clickable { onTogglePlayPause() },
                     contentAlignment = Alignment.Center
                 ) {
                     IconButton(
                         onClick = onTogglePlayPause,
-                        modifier = Modifier.testTag("play_pause_button_${recording.id}")
+                        modifier = Modifier
+                            .size(38.dp)
+                            .testTag("play_pause_button_${recording.id}")
                     ) {
                         Icon(
                             imageVector = if (isPlayingThis) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (isPlayingThis) "Pause" else "Play",
-                            tint = if (isCurrentTrack) Color(0xFF0C1920) else Color.White,
-                            modifier = Modifier.size(24.dp)
+                            tint = if (isPlayingThis) Color(0xFF101114) else TextPrimary,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Title and Metadata
-                Column(modifier = Modifier.weight(1f)) {
+                // Filename and Metadata
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onTogglePlayPause() }
+                ) {
                     Text(
                         text = recording.title,
-                        style = MaterialTheme.typography.titleMedium.copy(
+                        style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.sp
+                            fontSize = 14.sp
                         ),
-                        color = if (isCurrentTrack) PlaybackCyan else TextPrimary,
+                        color = if (isCurrentTrack) TealAccent else TextPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(2.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = recording.formattedDuration,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = TextSecondary
-                        )
-                        Text(
-                            text = " • ",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextTertiary
-                        )
-                        Text(
-                            text = recording.formattedSize,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextTertiary
-                        )
-                    }
                     Text(
-                        text = recording.formattedDate,
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                        color = TextTertiary
+                        text = "${recording.formattedDuration}  •  ${recording.formattedSize}  •  ${recording.formattedDate}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 12.sp
+                        ),
+                        color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                // Options Menu Button
+                // Contextual Overflow Menu
                 Box {
                     IconButton(
                         onClick = { showMenu = true },
-                        modifier = Modifier.testTag("more_options_button_${recording.id}")
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("more_options_button_${recording.id}")
                     ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More Options",
-                            tint = TextSecondary
+                            contentDescription = "Options",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
@@ -184,9 +179,24 @@ fun RecordingItemCard(
                         modifier = Modifier.background(DarkSurfaceVariant)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Rename", color = TextPrimary) },
+                            text = { Text(if (isPlayingThis) "Pause" else "Play", color = TextPrimary, fontSize = 14.sp) },
                             leadingIcon = {
-                                Icon(Icons.Default.Edit, contentDescription = null, tint = TextSecondary)
+                                Icon(
+                                    imageVector = if (isPlayingThis) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            onClick = {
+                                showMenu = false
+                                onTogglePlayPause()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Rename", color = TextPrimary, fontSize = 14.sp) },
+                            leadingIcon = {
+                                Icon(Icons.Default.Edit, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
                             },
                             onClick = {
                                 showMenu = false
@@ -194,9 +204,9 @@ fun RecordingItemCard(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Share", color = TextPrimary) },
+                            text = { Text("Share", color = TextPrimary, fontSize = 14.sp) },
                             leadingIcon = {
-                                Icon(Icons.Default.Share, contentDescription = null, tint = TextSecondary)
+                                Icon(Icons.Default.Share, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
                             },
                             onClick = {
                                 showMenu = false
@@ -204,9 +214,9 @@ fun RecordingItemCard(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Delete", color = Color(0xFFFF5252)) },
+                            text = { Text("Delete", color = RecordingRed, fontSize = 14.sp) },
                             leadingIcon = {
-                                Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFFF5252))
+                                Icon(Icons.Default.Delete, contentDescription = null, tint = RecordingRed, modifier = Modifier.size(18.dp))
                             },
                             onClick = {
                                 showMenu = false
@@ -217,7 +227,7 @@ fun RecordingItemCard(
                 }
             }
 
-            // Expanded Playback Controls when active
+            // Inline Playback Progress when this recording is loaded
             AnimatedVisibility(
                 visible = isCurrentTrack,
                 enter = fadeIn(),
@@ -226,70 +236,69 @@ fun RecordingItemCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp)
+                        .padding(top = 8.dp)
                 ) {
-                    // Scrubbing Slider
                     Slider(
                         value = playbackState.currentPositionMs.toFloat(),
                         onValueChange = { onSeek(it.toInt()) },
                         valueRange = 0f..playbackState.totalDurationMs.toFloat().coerceAtLeast(1f),
                         colors = SliderDefaults.colors(
-                            thumbColor = PlaybackCyan,
-                            activeTrackColor = PlaybackCyan,
-                            inactiveTrackColor = Color(0xFF2C3240)
+                            thumbColor = TealAccent,
+                            activeTrackColor = TealAccent,
+                            inactiveTrackColor = DarkDivider
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(20.dp)
+                            .height(18.dp)
                             .testTag("playback_slider_${recording.id}")
                     )
 
-                    // Current position and total duration
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = playbackState.formattedCurrentTime,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = PlaybackCyan
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                            color = TealAccent
                         )
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = onRewind,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .testTag("rewind_5s_${recording.id}")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Replay5,
+                                    contentDescription = "Rewind 5s",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            IconButton(
+                                onClick = onForward,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .testTag("forward_5s_${recording.id}")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Forward5,
+                                    contentDescription = "Forward 5s",
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
                         Text(
                             text = playbackState.formattedTotalTime,
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
                             color = TextSecondary
                         )
-                    }
-
-                    // Replay / Forward Skip Buttons
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = onRewind,
-                            modifier = Modifier.testTag("rewind_5s_${recording.id}")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Replay5,
-                                contentDescription = "Rewind 5 seconds",
-                                tint = TextSecondary
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        IconButton(
-                            onClick = onForward,
-                            modifier = Modifier.testTag("forward_5s_${recording.id}")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Forward5,
-                                contentDescription = "Forward 5 seconds",
-                                tint = TextSecondary
-                            )
-                        }
                     }
                 }
             }

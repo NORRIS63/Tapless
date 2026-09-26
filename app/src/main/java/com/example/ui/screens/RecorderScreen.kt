@@ -7,8 +7,10 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,10 +36,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -50,6 +49,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,12 +79,12 @@ import com.example.ui.components.RecordingItemCard
 import com.example.ui.components.RenameDialog
 import com.example.ui.components.TimerDisplay
 import com.example.ui.theme.DarkBackground
+import com.example.ui.theme.DarkDivider
 import com.example.ui.theme.DarkSurface
 import com.example.ui.theme.DarkSurfaceBorder
 import com.example.ui.theme.DarkSurfaceVariant
-import com.example.ui.theme.PlaybackCyan
 import com.example.ui.theme.RecordingRed
-import com.example.ui.theme.StatusGreen
+import com.example.ui.theme.TealAccent
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
@@ -112,6 +112,13 @@ fun RecorderScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     var showPermissionRationale by remember { mutableStateOf(false) }
+    var isSearchExpanded by remember { mutableStateOf(false) }
+
+    val hasMicPermission = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.RECORD_AUDIO
+    ) == PackageManager.PERMISSION_GRANTED
+    val isRecorderAvailable = hasMicPermission && recordingState.error == null
 
     LaunchedEffect(Unit) {
         viewModel.refreshAccessibilityServiceStatus(context)
@@ -124,7 +131,6 @@ fun RecorderScreen(
         }
     }
 
-    // Permission Launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -161,43 +167,35 @@ fun RecorderScreen(
         containerColor = DarkBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            CenterAlignedTopAppBar(
+            // 1. Compact top app bar with Tapless name and simple settings icon
+            TopAppBar(
                 title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            ),
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = stringResource(R.string.app_tagline),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                letterSpacing = 0.3.sp
-                            ),
-                            color = PlaybackCyan
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp,
+                            letterSpacing = 0.3.sp
+                        ),
+                        color = TextPrimary
+                    )
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = DarkBackground
-                ),
                 actions = {
                     IconButton(
                         onClick = { viewModel.navigateTo(AppScreen.SHORTCUT_SETUP) },
                         modifier = Modifier.testTag("shortcut_settings_button")
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeDown,
-                            contentDescription = "Volume Shortcut Settings",
-                            tint = if (isShortcutEnabled && isServiceActive) PlaybackCyan else TextSecondary
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            tint = if (isShortcutEnabled && isServiceActive) TealAccent else TextSecondary,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBackground
+                )
             )
         }
     ) { innerPadding ->
@@ -206,67 +204,19 @@ fun RecorderScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .testTag("recordings_lazy_column"),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 48.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 40.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Shortcut status banner
-            item {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(1.dp, DarkSurfaceBorder, RoundedCornerShape(12.dp))
-                        .clickable { viewModel.navigateTo(AppScreen.SHORTCUT_SETUP) }
-                        .testTag("shortcut_status_banner"),
-                    color = DarkSurface,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.VolumeDown,
-                                contentDescription = null,
-                                tint = if (isShortcutEnabled && isServiceActive) PlaybackCyan else TextTertiary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isShortcutEnabled && isServiceActive) {
-                                    "Volume Shortcut Active (2x Vol- to record)"
-                                } else if (isShortcutEnabled) {
-                                    "Volume Shortcut: Tap to finish setup"
-                                } else {
-                                    "Hardware Shortcut: Off"
-                                },
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                                color = if (isShortcutEnabled && isServiceActive) PlaybackCyan else TextSecondary
-                            )
-                        }
-                        Text(
-                            text = "Settings ›",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = PlaybackCyan
-                        )
-                    }
-                }
-            }
-
             // Error banner if any
             if (recordingState.error != null) {
                 item {
-                    Card(
+                    Surface(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("error_banner"),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF3B1214)),
-                        shape = RoundedCornerShape(12.dp)
+                        color = Color(0xFF261416),
+                        shape = RoundedCornerShape(8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, RecordingRed.copy(alpha = 0.5f))
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -275,20 +225,25 @@ fun RecorderScreen(
                             Icon(
                                 imageVector = Icons.Default.ErrorOutline,
                                 contentDescription = null,
-                                tint = RecordingRed
+                                tint = RecordingRed,
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = recordingState.error ?: "",
-                                color = Color(0xFFFFDAD6),
+                                color = TextPrimary,
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.weight(1f)
                             )
-                            IconButton(onClick = { viewModel.clearRecordingError() }) {
+                            IconButton(
+                                onClick = { viewModel.clearRecordingError() },
+                                modifier = Modifier.size(24.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Dismiss error",
-                                    tint = Color(0xFFFFDAD6)
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
@@ -296,43 +251,44 @@ fun RecorderScreen(
                 }
             }
 
-            // STUDIO RECORDING CONSOLE (Deck)
+            // MAIN RECORDER CONSOLE
             item {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .border(1.dp, DarkSurfaceBorder, RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(1.dp, DarkSurfaceBorder, RoundedCornerShape(16.dp))
                         .testTag("recording_studio_deck"),
                     color = DarkSurface,
-                    shape = RoundedCornerShape(24.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 20.dp, bottom = 12.dp, start = 16.dp, end = 16.dp),
+                            .padding(horizontal = 16.dp, vertical = 18.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Status & Timer
+                        // 2 & 3. Small status indicator and simple recording timer
                         TimerDisplay(
                             isRecording = recordingState.isRecording,
                             isPaused = recordingState.isPaused,
-                            formattedTime = recordingState.formattedElapsedTime
-                        )
-
-                        Spacer(modifier = Modifier.height(18.dp))
-
-                        // Audio Waveform Visualizer
-                        AudioVisualizer(
-                            isRecording = recordingState.isRecording,
-                            isPaused = recordingState.isPaused,
-                            amplitudes = recordingState.amplitudes,
-                            modifier = Modifier.padding(horizontal = 8.dp)
+                            formattedTime = recordingState.formattedElapsedTime,
+                            isAvailable = isRecorderAvailable
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Big tactile Record / Stop controls
+                        // 3. Clean waveform visualization
+                        AudioVisualizer(
+                            isRecording = recordingState.isRecording,
+                            isPaused = recordingState.isPaused,
+                            amplitudes = recordingState.amplitudes,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // 4 & 5. One prominent circular record button and state label
                         RecordingControls(
                             isRecording = recordingState.isRecording,
                             isPaused = recordingState.isPaused,
@@ -341,26 +297,13 @@ fun RecorderScreen(
                             onPauseRecording = { viewModel.pauseRecording(context) },
                             onResumeRecording = { viewModel.resumeRecording(context) }
                         )
-
-                        Text(
-                            text = if (recordingState.isRecording) {
-                                stringResource(R.string.stop_recording)
-                            } else {
-                                stringResource(R.string.start_recording)
-                            },
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = if (recordingState.isRecording) RecordingRed else TextSecondary,
-                            modifier = Modifier.padding(bottom = 6.dp)
-                        )
                     }
                 }
             }
 
-            // SECTION HEADER: SAVED RECORDINGS & SEARCH
+            // 6. COMPACT RECORDINGS SECTION HEADER (Recordings count, search icon)
             item {
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -369,76 +312,100 @@ fun RecorderScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = stringResource(R.string.recordings_title),
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp
                             ),
                             color = TextPrimary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .clip(CircleShape)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(DarkSurfaceVariant)
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
                         ) {
                             Text(
                                 text = "${recordings.size}",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = PlaybackCyan
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 11.sp
+                                ),
+                                color = TealAccent
                             )
                         }
                     }
 
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = PlaybackCyan,
-                            strokeWidth = 2.dp
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .size(16.dp),
+                                color = TealAccent,
+                                strokeWidth = 2.dp
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                isSearchExpanded = !isSearchExpanded
+                                if (!isSearchExpanded) viewModel.setSearchQuery("")
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isSearchExpanded) Icons.Default.Close else Icons.Default.Search,
+                                contentDescription = if (isSearchExpanded) "Close Search" else "Search",
+                                tint = if (isSearchExpanded || searchQuery.isNotEmpty()) TealAccent else TextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
 
-            // Search filter field
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { viewModel.setSearchQuery(it) },
-                    placeholder = { Text("Search by filename…", color = TextTertiary, fontSize = 14.sp) },
-                    leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary)
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear search", tint = TextSecondary)
+            // Clean expandable Search Input
+            if (isSearchExpanded || searchQuery.isNotEmpty()) {
+                item {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.setSearchQuery(it) },
+                        placeholder = { Text("Filter recordings…", color = TextTertiary, fontSize = 13.sp) },
+                        leadingIcon = {
+                            Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.setSearchQuery("") }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Default.Close, contentDescription = "Clear", tint = TextSecondary, modifier = Modifier.size(16.dp))
+                                }
                             }
-                        }
-                    },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedBorderColor = PlaybackCyan.copy(alpha = 0.7f),
-                        unfocusedBorderColor = DarkSurfaceBorder,
-                        focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("search_recordings_input")
-                )
+                        },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = DarkSurface,
+                            unfocusedContainerColor = DarkSurface,
+                            focusedBorderColor = TealAccent,
+                            unfocusedBorderColor = DarkDivider,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("search_recordings_input")
+                    )
+                }
             }
 
-            // Empty State
+            // 8. MINIMAL EMPTY STATE
             if (recordings.isEmpty()) {
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 40.dp)
+                            .padding(vertical = 32.dp)
                             .testTag("empty_state_container"),
                         contentAlignment = Alignment.Center
                     ) {
@@ -446,33 +413,34 @@ fun RecorderScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(CircleShape)
-                                    .background(DarkSurfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Mic,
-                                    contentDescription = null,
-                                    tint = TextTertiary,
-                                    modifier = Modifier.size(36.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(14.dp))
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = null,
+                                tint = TextTertiary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = if (searchQuery.isNotEmpty()) "No matching recordings found" else stringResource(R.string.no_recordings),
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = if (searchQuery.isNotEmpty()) "No matching recordings" else "No recordings yet",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp
+                                ),
                                 color = TextSecondary,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 32.dp)
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = if (searchQuery.isNotEmpty()) "Try a different search term" else "Tap the record button to begin.",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                color = TextTertiary,
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
                 }
             } else {
-                // List of recordings
+                // 7. CLEAN LIST OF SAVED RECORDINGS
                 items(
                     items = recordings,
                     key = { it.id }
@@ -496,7 +464,7 @@ fun RecorderScreen(
         }
     }
 
-    // Delete confirmation dialog
+    // Dialogs
     recordingToDelete?.let { recording ->
         DeleteConfirmDialog(
             recording = recording,
@@ -505,7 +473,6 @@ fun RecorderScreen(
         )
     }
 
-    // Rename dialog
     recordingToRename?.let {
         RenameDialog(
             currentName = renameText,
@@ -515,7 +482,6 @@ fun RecorderScreen(
         )
     }
 
-    // Permission rationale dialog
     if (showPermissionRationale) {
         PermissionRationaleDialog(
             onGrantClick = {

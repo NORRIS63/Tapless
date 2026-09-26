@@ -15,11 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.ui.theme.PlaybackCyan
+import com.example.ui.theme.DarkDivider
 import com.example.ui.theme.RecordingRed
+import com.example.ui.theme.StatusAmber
+import com.example.ui.theme.TealAccent
 
 @Composable
 fun AudioVisualizer(
@@ -28,38 +29,35 @@ fun AudioVisualizer(
     amplitudes: List<Float>,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val infiniteTransition = rememberInfiniteTransition(label = "visualizerIdle")
     val idlePhase by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 6.28f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2400, easing = FastOutSlowInEasing),
+            animation = tween(2800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "idleWave"
+        label = "idlePhase"
     )
 
     Canvas(
         modifier = modifier
             .fillMaxWidth()
-            .height(72.dp)
+            .height(44.dp)
     ) {
         val width = size.width
         val height = size.height
         val centerY = height / 2f
-        val barCount = 36
-        val barWidth = (width / (barCount * 1.5f)).coerceAtLeast(3f)
-        val space = (width - (barCount * barWidth)) / (barCount - 1)
+        val barCount = 28
+        val barWidth = 3f.coerceAtLeast((width / (barCount * 2.2f)))
+        val totalBarsWidth = barCount * barWidth
+        val space = ((width - totalBarsWidth) / (barCount - 1)).coerceAtLeast(2f)
 
-        val gradient = Brush.verticalGradient(
-            colors = if (isRecording && !isPaused) {
-                listOf(RecordingRed, PlaybackCyan)
-            } else if (isPaused) {
-                listOf(Color(0xFFF59E0B), Color(0x66F59E0B))
-            } else {
-                listOf(Color(0xFF4B5563), Color(0xFF1F2937))
-            }
-        )
+        val activeColor = when {
+            isRecording && !isPaused -> RecordingRed
+            isRecording && isPaused -> StatusAmber
+            else -> DarkDivider
+        }
 
         for (i in 0 until barCount) {
             val ampValue = if (isRecording && !isPaused) {
@@ -67,24 +65,23 @@ fun AudioVisualizer(
                 if (index in amplitudes.indices) {
                     amplitudes[index]
                 } else {
-                    0.05f
+                    0.04f
                 }
             } else if (isRecording && isPaused) {
                 0.08f
             } else {
-                // gentle idle wave
-                val sine = (kotlin.math.sin(idlePhase + (i * 0.2f)) + 1f) / 2f
-                0.04f + (sine.toFloat() * 0.08f)
+                // Subtle calm baseline
+                val sine = (kotlin.math.sin(idlePhase + (i * 0.22f)) + 1f) / 2f
+                0.03f + (sine.toFloat() * 0.05f)
             }
 
-            // Height calculation
-            val minHeight = 6f
-            val barHeight = (ampValue * (height - 8f) + minHeight).coerceIn(minHeight, height)
+            val minHeight = 4f
+            val barHeight = (ampValue * (height - 6f) + minHeight).coerceIn(minHeight, height)
             val x = i * (barWidth + space)
             val y = centerY - (barHeight / 2f)
 
             drawRoundRect(
-                brush = gradient,
+                color = if (isRecording) activeColor else Color(0xFF282B34),
                 topLeft = Offset(x, y),
                 size = Size(barWidth, barHeight),
                 cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)

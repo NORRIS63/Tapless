@@ -1,6 +1,8 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -13,9 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.example.R
-import com.example.ui.theme.DarkSurfaceVariant
-import com.example.ui.theme.PlaybackCyan
+import com.example.ui.theme.DarkDivider
+import com.example.ui.theme.DarkSurface
+import com.example.ui.theme.DarkSurfaceBorder
+import com.example.ui.theme.TealAccent
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
@@ -28,7 +33,8 @@ fun RenameDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = DarkSurfaceVariant,
+        containerColor = DarkSurface,
+        modifier = Modifier.border(1.dp, DarkSurfaceBorder, RoundedCornerShape(20.dp)),
         title = {
             Text(
                 text = stringResource(R.string.rename_title),
@@ -42,11 +48,14 @@ fun RenameDialog(
                 singleLine = true,
                 placeholder = { Text(stringResource(R.string.rename_hint), color = TextSecondary) },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = PlaybackCyan,
-                    unfocusedBorderColor = Color(0xFF374151),
+                    focusedBorderColor = TealAccent,
+                    unfocusedBorderColor = DarkDivider,
                     focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
+                    unfocusedTextColor = TextPrimary,
+                    focusedContainerColor = Color(0xFF13151A),
+                    unfocusedContainerColor = Color(0xFF13151A)
                 ),
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("rename_text_field")
@@ -56,10 +65,13 @@ fun RenameDialog(
             Button(
                 onClick = onConfirm,
                 enabled = currentName.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = PlaybackCyan),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TealAccent,
+                    contentColor = Color(0xFF101114)
+                ),
                 modifier = Modifier.testTag("confirm_rename_button")
             ) {
-                Text(stringResource(R.string.save), color = Color(0xFF0C1920))
+                Text(stringResource(R.string.save), color = Color(0xFF101114))
             }
         },
         dismissButton = {

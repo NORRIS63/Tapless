@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -10,9 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.example.R
-import com.example.ui.theme.DarkSurfaceVariant
-import com.example.ui.theme.RecordingRed
+import com.example.ui.theme.DarkSurface
+import com.example.ui.theme.DarkSurfaceBorder
+import com.example.ui.theme.TealAccent
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
@@ -23,7 +27,8 @@ fun PermissionRationaleDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = DarkSurfaceVariant,
+        containerColor = DarkSurface,
+        modifier = Modifier.border(1.dp, DarkSurfaceBorder, RoundedCornerShape(20.dp)),
         title = {
             Text(
                 text = stringResource(R.string.permission_required_title),
@@ -39,10 +44,13 @@ fun PermissionRationaleDialog(
         confirmButton = {
             Button(
                 onClick = onGrantClick,
-                colors = ButtonDefaults.buttonColors(containerColor = RecordingRed),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TealAccent,
+                    contentColor = Color(0xFF101114)
+                ),
                 modifier = Modifier.testTag("grant_permission_button")
             ) {
-                Text(stringResource(R.string.grant_permission), color = Color.White)
+                Text(stringResource(R.string.grant_permission), color = Color(0xFF101114))
             }
         },
         dismissButton = {

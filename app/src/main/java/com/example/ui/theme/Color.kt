@@ -2,24 +2,28 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Deep Obsidian Dark Palette
-val DarkBackground = Color(0xFF0C0D11)
-val DarkSurface = Color(0xFF16181F)
-val DarkSurfaceVariant = Color(0xFF20232C)
-val DarkSurfaceBorder = Color(0xFF2C303B)
+// Native Dark Palette - Near-Black Base
+val DarkBackground = Color(0xFF101114)
+val DarkSurface = Color(0xFF17191E)
+val DarkSurfaceVariant = Color(0xFF1E2027)
+val DarkSurfaceBorder = Color(0xFF262832)
+val DarkDivider = Color(0xFF20222A)
 
-// Studio Accent Colors
-val RecordingRed = Color(0xFFFF3B30)
-val RecordingRedGlow = Color(0x40FF3B30)
-val RecordingRedContainer = Color(0xFF3B1214)
+// Restrained Accents
+val TealAccent = Color(0xFF55D6BE)
+val TealAccentContainer = Color(0xFF163832)
+val PlaybackCyan = TealAccent // Alias for existing references
 
-val PlaybackCyan = Color(0xFF00E5FF)
-val PlaybackCyanGlow = Color(0x3300E5FF)
-val PlaybackCyanContainer = Color(0xFF0C2B33)
+val RecordingRed = Color(0xFFE5484D)
+val RecordingRedContainer = Color(0xFF381B1D)
+val RecordingRedGlow = Color(0x33E5484D)
 
-val StatusGreen = Color(0xFF10B981)
-val StatusAmber = Color(0xFFF59E0B)
+val StatusGreen = Color(0xFF4EBA6F)
+val StatusAmber = Color(0xFFF5A623)
+val StatusInactive = Color(0xFF4B4F58)
 
-val TextPrimary = Color(0xFFF3F4F6)
-val TextSecondary = Color(0xFF9CA3AF)
-val TextTertiary = Color(0xFF6B7280)
+// Typography & Content
+val TextPrimary = Color(0xFFFFFFFF)
+val TextSecondary = Color(0xFF8E929B)
+val TextTertiary = Color(0xFF5A5E68)
+

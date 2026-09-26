@@ -6,15 +6,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = RecordingRed,
-    onPrimary = Color.White,
-    primaryContainer = RecordingRedContainer,
-    onPrimaryContainer = Color(0xFFFFDAD6),
-    secondary = PlaybackCyan,
-    onSecondary = Color(0xFF00363D),
-    secondaryContainer = PlaybackCyanContainer,
-    onSecondaryContainer = Color(0xFFBCE9F1),
+    primary = TealAccent,
+    onPrimary = Color(0xFF101114),
+    primaryContainer = TealAccentContainer,
+    onPrimaryContainer = Color(0xFFD0F9F1),
+    secondary = TealAccent,
+    onSecondary = Color(0xFF101114),
+    secondaryContainer = TealAccentContainer,
+    onSecondaryContainer = Color(0xFFD0F9F1),
     tertiary = StatusGreen,
+    error = RecordingRed,
+    onError = Color.White,
+    errorContainer = RecordingRedContainer,
+    onErrorContainer = Color(0xFFFFDAD6),
     background = DarkBackground,
     onBackground = TextPrimary,
     surface = DarkSurface,
@@ -22,12 +26,12 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = TextSecondary,
     outline = DarkSurfaceBorder,
-    outlineVariant = Color(0xFF333846)
+    outlineVariant = DarkDivider
 )
 
 @Composable
 fun MyApplicationTheme(
-    darkTheme: Boolean = true, // Default to clean dark studio theme as requested
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
@@ -36,3 +40,4 @@ fun MyApplicationTheme(
         content = content
     )
 }
+

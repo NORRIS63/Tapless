@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -10,9 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.model.AudioRecording
-import com.example.ui.theme.DarkSurfaceVariant
+import com.example.ui.theme.DarkSurface
+import com.example.ui.theme.DarkSurfaceBorder
 import com.example.ui.theme.RecordingRed
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
@@ -25,7 +29,8 @@ fun DeleteConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = DarkSurfaceVariant,
+        containerColor = DarkSurface,
+        modifier = Modifier.border(1.dp, DarkSurfaceBorder, RoundedCornerShape(20.dp)),
         title = {
             Text(
                 text = stringResource(R.string.delete_confirm_title),
@@ -34,7 +39,7 @@ fun DeleteConfirmDialog(
         },
         text = {
             Text(
-                text = "Are you sure you want to permanently delete \"${recording.title}\"? This action cannot be undone.",
+                text = "Delete \"${recording.title}\"? This audio file will be permanently removed.",
                 color = TextSecondary
             )
         },
